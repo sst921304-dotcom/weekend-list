@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>週末自駕出遊清單</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;color:#24332f;background:#f5f7f3;font-synthesis:none;text-rendering:optimizeLegibility}*{box-sizing:border-box}body{margin:0}.shell{max-width:1440px;margin:auto;padding:32px 24px 56px}header{padding:30px 32px;background:linear-gradient(125deg,#183d35,#477b60);color:#fff;border-radius:22px;box-shadow:0 12px 32px #24463720}header .eyebrow{margin:0 0 10px;letter-spacing:.12em;font-size:.8rem;opacity:.8}h1{margin:0;font-size:clamp(1.7rem,4vw,2.5rem);line-height:1.25}#scope{margin:14px 0 0;color:#ecf6ed;line-height:1.7}.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 14px;align-items:center}.toolbar button,.toolbar input,.toolbar select{font:inherit;border:1px solid #ccd6ce;border-radius:10px;padding:10px 13px;background:white;color:#24332f}.toolbar button{cursor:pointer;font-weight:650}.toolbar button.primary{background:#245d49;border-color:#245d49;color:white}.toolbar button:hover{filter:brightness(.96)}#search{flex:1;min-width:220px}#status{margin:0 0 16px;padding:12px 15px;background:#fff;border:1px solid #dce5dc;border-radius:12px;color:#52665b;line-height:1.55}#status.error{background:#fff3ef;color:#8e3929;border-color:#f0c9be}.summary{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:16px 2px;color:#53645b;font-size:.95rem}.table-wrap{overflow:auto;background:#fff;border:1px solid #dce5dc;border-radius:16px;box-shadow:0 8px 22px #193b2710}table{border-collapse:collapse;width:100%;min-width:1360px}thead th{position:sticky;top:0;background:#eaf1e9;color:#304c3d;text-align:left;font-size:.9rem}th,td{padding:14px 15px;border-bottom:1px solid #e8ede8;vertical-align:top;line-height:1.65}tbody tr:hover{background:#f8fbf7}td:first-child{font-weight:700;min-width:205px;color:#234b3a}td:nth-child(2){min-width:84px;white-space:nowrap}td:nth-child(3){min-width:100px;white-space:nowrap}td:nth-child(4){min-width:260px}td:nth-child(5){min-width:240px}td:nth-child(6){min-width:250px}td:nth-child(7){min-width:180px;font-size:.88rem}.map-link{display:inline-flex;padding:6px 10px;border-radius:999px;background:#edf5ef;color:#276148;text-decoration:none;font-weight:650}.map-link:hover{background:#dcece0;text-decoration:underline}.source-link{color:#276148;text-decoration:underline;text-underline-offset:2px}.category{display:inline-block;margin:0 0 9px;padding:3px 8px;background:#f1f3eb;color:#596b4e;border-radius:999px;font-size:.78rem;font-weight:600}.visited-tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#edf5ef;color:#276148;font-size:.84rem}.visited-tag.unknown{background:#f3f1e9;color:#746c4b}.empty{padding:38px!important;text-align:center;color:#718077!important;font-weight:400!important}.foot{margin:15px 3px 0;color:#748078;font-size:.84rem;line-height:1.6}#fallback, #connect, #refresh {display:none} @media(max-width:700px){.shell{padding:14px 12px 32px}header{padding:23px 20px;border-radius:17px}.toolbar{gap:8px}.toolbar button{flex:1}.summary{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<main class="shell">
+<header>
+<p class="eyebrow">WEEKEND ROAD TRIP IDEAS</p>
+<h1 id="title">週末自駕出遊清單</h1>
+<p id="scope">載入中，請稍候...</p>
+</header>
+<div class="toolbar">
+<button class="primary" id="connect">連結／選擇 Markdown 檔</button>
+<button id="refresh" disabled>重新讀取</button>
+<input id="search" type="search" placeholder="搜尋地點、特色、步道或玩法" aria-label="搜尋">
+<select id="region" aria-label="依區域篩選"><option value="">所有區域</option></select>
+<select id="section" aria-label="依主題篩選"><option value="">所有主題</option></select>
+<select id="visited" aria-label="依是否去過篩選"><option value="">所有造訪狀態</option><option value="已去過">已去過</option><option value="尚未去過">尚未去過</option><option value="未確認">未確認</option></select>
+<input id="fallback" type="file" accept=".md,.markdown,text/markdown,text/plain">
+</div>
+<p id="status" role="status">正在自動載入最新版「週末自駕出遊清單.md」...</p>
+<div class="summary"><span id="count">尚未載入清單</span><span id="updated"></span></div>
+<div class="table-wrap">
+<table>
+<thead><tr><th>地點</th><th>是否去過</th><th>Google Maps</th><th>特色／值得去的理由</th><th>附近散步／步道</th><th>建議玩法</th><th>參考報導／節目／官方資訊</th></tr></thead>
+<tbody id="results"><tr><td class="empty" colspan="7">載入 Markdown 檔後顯示清單。</td></tr></tbody>
+</table>
+</div>
+<p class="foot">Google Maps 連結會以地點搜尋開啟。資料由同資料夾下的 週末自駕出遊清單.md 提供。</p>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const state = { rows: [], handle: null, modified: 0, busy: false, fileName: "" };
+  
+  function esc(value) { return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+  
+  function parseMarkdown(source) {
+    const rows = []; let category = "精選與延伸地點"; let title = "週末自駕出遊清單"; let scope = "";
+    for (const raw of source.replace(/^\uFEFF/, "").split(/\r?\n/)) {
+      const line = raw.trim();
+      if (line.startsWith("# ") && title === "週末自駕出遊清單") title = line.slice(2).trim();
+      if (line.startsWith("> 範圍：")) scope = line.slice(2).trim();
+      if (line.startsWith("## ") && line !== "## 搜尋方向") category = line.slice(3).trim();
+      if (!line.startsWith("|") || line.startsWith("| 地點 |") || /^\|\s*:?-{2,}/.test(line)) continue;
+      const cells = line.split("|").slice(1,-1).map(x=>x.trim());
+      if (cells.length < 7) continue;
+      const map = cells[2].match(/\[([^\]]*)\]\((https:\/\/www\.google\.com\/maps\/search\/[^)]+)\)/);
+      const place = cells[0];
+      const regionMatch = place.match(/(新北|台北|臺北|基隆|桃園|新竹|宜蘭)/);
+      const region = regionMatch ? regionMatch[1].replace("臺北","台北") : "其他／跨區";
+      rows.push({ place, visited: cells[1] || "未確認", mapText: map ? map[1] : "查看地點", mapUrl: map ? map[2] : "", feature: cells[3], walk: cells[4], plan: cells[5], sources: cells[6], category, region });
+    }
+    return { rows, title, scope };
+  }
+  
+  function setStatus(message, isError=false) { $("status").textContent=message; $("status").classList.toggle("error",isError); }
+  
+  function refreshFilters() {
+    const regions = [...new Set(state.rows.map(r=>r.region))].sort((a,b)=>a.localeCompare(b,"zh-Hant"));
+    const categories = [...new Set(state.rows.map(r=>r.category))];
+    const fill=(id,items,label)=>{const select=$(id), old=select.value;select.replaceChildren(new Option(label,""));items.forEach(x=>select.add(new Option(x,x)));if(items.includes(old))select.value=old;};
+    fill("region",regions,"所有區域"); fill("section",categories,"所有主題");
+  }
+  
+  function render() {
+    const query=$("search").value.trim().toLocaleLowerCase(); const region=$("region").value; const section=$("section").value; const visited=$("visited").value;
+    const filtered=state.rows.filter(r=>(!region||r.region===region)&&(!section||r.category===section)&&(!visited||r.visited===visited)&&(!query||[r.place,r.visited,r.feature,r.walk,r.plan,r.sources,r.category,r.region].join(" ").toLocaleLowerCase().includes(query)));
+    $("count").textContent=`顯示 ${filtered.length} 個地點／組合（共 ${state.rows.length} 個）`;
+    if (!filtered.length) { $("results").innerHTML='<tr><td class="empty" colspan="7">沒有符合條件的地點。</td></tr>'; return; }
+    const sourceHtml=value=>esc(value).replace(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g,'<a class="source-link" href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    $("results").innerHTML=filtered.map(r=>`<tr><td><span class="category">${esc(r.category)}</span><br>${esc(r.place)}</td><td><span class="visited-tag ${r.visited==="未確認"?"unknown":""}">${esc(r.visited)}</span></td><td>${r.mapUrl?`<a class="map-link" href="${esc(r.mapUrl)}" target="_blank" rel="noopener noreferrer">${esc(r.mapText)}</a>`:"—"}</td><td>${esc(r.feature)}</td><td>${esc(r.walk)}</td><td>${esc(r.plan)}</td><td>${sourceHtml(r.sources)||"—"}</td></tr>`).join("");
+  }
+
+  // 自動載入邏輯
+  async function autoLoadMarkdown() {
+    try {
+      // 加上動態時間戳記 ?t=... 避免瀏覽器快取舊資料
+      const response = await fetch(`週末自駕出遊清單.md?t=${Date.now()}`);
+      if (!response.ok) throw new Error("無法取得 Markdown 檔案");
+      
+      const text = await response.text();
+      const parsed = parseMarkdown(text);
+      
+      if (!parsed.rows.length) {
+        setStatus("讀取到檔案，但找不到符合格式的清單表格。請確認 Markdown 格式是否正確。", true);
+        return;
+      }
+      
+      state.rows = parsed.rows;
+      $("title").textContent = parsed.title;
+      $("scope").textContent = parsed.scope || "週末自駕出遊清單已載入。";
+      refreshFilters();
+      render();
+      
+      setStatus("已自動載入最新出遊清單！");
+      $("updated").textContent = `最近讀取：${new Date().toLocaleString("zh-TW")}`;
+    } catch (err) {
+      setStatus(`自動載入失敗：${err.message}。請確認網頁與「週末自駕出遊清單.md」是否放在同一個資料夾。`, true);
+    }
+  }
+
+  // 綁定事件處理
+  for (const id of ["search","region","section","visited"]) $(id).addEventListener(id==="search"?"input":"change",render);
+  
+  // 頁面開啟時自動執行載入
+  autoLoadMarkdown();
+})();
+</script>
+</body>
+</html>
